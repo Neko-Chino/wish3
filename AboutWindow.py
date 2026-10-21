@@ -1,13 +1,15 @@
 """
 祈愿 · 幸运观众：关于窗口
 
-Copyright © 2024-2025 XuangeAha(轩哥啊哈OvO/卡猫kat)
+Copyright © 2024-2026 卡猫kat
 
 """
 
 from PyQt5.QtWidgets import QLabel, QPushButton, QHBoxLayout, QVBoxLayout
 from PyQt5.QtGui import QFont, QFontDatabase , QIcon
 from PyQt5.QtCore import Qt
+import os
+import sys
 
 from RoundShadow import RoundShadow
 from MovableWindow import MovableWindow
@@ -20,7 +22,32 @@ class AboutWindow(MovableWindow):
         self.round_shadow = RoundShadow(self)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
-        _global_font = QFontDatabase.applicationFontFamilies(QFontDatabase.addApplicationFont(r'.wish\fonts\HYWH-85w Heavy.ttf'))[0]  
+        def get_resource_path(relative_path):
+            """获取资源文件的绝对路径（兼容 PyInstaller 单文件打包环境）"""
+            if hasattr(sys, '_MEIPASS'):
+                # 打包后临时解压目录
+                base_path = sys._MEIPASS
+            else:
+                # 本地开发时的根目录
+                base_path = os.path.abspath('.')
+            return os.path.join(base_path, relative_path)
+
+
+        # 1. 获取字体的真实路径
+        font_path = get_resource_path(
+            os.path.join('.wish', 'fonts', 'HYWH-85w Heavy.ttf')
+        ) 
+        font_id = QFontDatabase.addApplicationFont(font_path)
+        if font_id != -1:
+            families = QFontDatabase.applicationFontFamilies(font_id)
+            if families:
+                _global_font = families[0]
+            else:
+                _global_font = 'Microsoft YaHei'  # 备用默认字体
+        else:
+            print(f'警告: 字体加载失败，路径: {font_path}')
+            _global_font = 'Microsoft YaHei'  # 加载失败时降级使用系统字体，避免程序直接崩溃
+        
 
         self.about_layout = QVBoxLayout(self)
 
@@ -29,7 +56,7 @@ class AboutWindow(MovableWindow):
         self.about_title_label = QLabel(title_label, self)
         self.about_title_label.setFont(QFont(_global_font, 11))
         self.about_close_button = QPushButton('', self)
-        self.about_close_button.setIcon(QIcon(r'.wish\assets\icon\close.png'))
+        self.about_close_button.setIcon(QIcon(get_resource_path(os.path.join('.wish', 'assets', 'icon', 'close.png'))))
         self.about_close_button.setFont(QFont(_global_font, 12))
         self.about_close_button.clicked.connect(self.close)
         self.about_close_button.setFixedSize(30, 30)
@@ -43,7 +70,7 @@ class AboutWindow(MovableWindow):
         self.about_header_layout.addWidget(self.about_close_button)
 
         self.wish_icon = QLabel(self)  # 祈愿·幸运观众图标
-        self.wish_icon.setPixmap(QIcon(r'.wish\assets\wish\wish.png').pixmap(100, 100))
+        self.wish_icon.setPixmap(QIcon(get_resource_path(os.path.join('.wish', 'assets', 'wish', 'wish.png'))).pixmap(100, 100))
         self.wish_icon.setAlignment(Qt.AlignCenter)
 
         self.wish_title = QLabel('祈愿·幸运观众 '+_ver_short, self)  # 祈愿·幸运观众标题
@@ -55,7 +82,7 @@ class AboutWindow(MovableWindow):
         self.wish_subtitlename = QLabel(f'({_ver_type})', self)
         self.wish_subtitlename.setFont(QFont(_global_font, 11))
         self.wish_subtitlename.setAlignment(Qt.AlignCenter)
-        self.wish_copyright = QLabel('Copyright © 2023-2025 XuangeAha(轩哥啊哈OvO), \nAll rights reserved. | MIT License', self)
+        self.wish_copyright = QLabel('Copyright © 2023-2026 卡猫kat\nAll rights reserved. | MIT License', self)
         self.wish_copyright.setFont(QFont('Arial', 10))
         self.wish_copyright.setAlignment(Qt.AlignCenter)
 
@@ -78,10 +105,10 @@ class AboutWindow(MovableWindow):
 
     def call_github_broser(self):  # 外链调用
         import webbrowser
-        webbrowser.open('http://wish.xuangeaha.xyz') 
+        webbrowser.open('https://neko-chino.github.io/wishsite/') 
         
     def call_wishsite_broser(self): 
         import webbrowser
-        webbrowser.open('https://github.com/xuangeaha/wish3')
+        webbrowser.open('https://github.com/Neko-Chino/wish3')
     
     

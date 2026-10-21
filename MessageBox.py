@@ -1,13 +1,15 @@
 """
 祈愿 · 幸运观众：消息气泡
 
-Copyright © 2025 XuangeAha(轩哥啊哈OvO/卡猫kat)
+Copyright © 2025-2026 卡猫kat
 
 """
 
 from PyQt5.QtWidgets import QLabel, QGraphicsOpacityEffect, QApplication
 from PyQt5.QtGui import QFontDatabase, QFont
 from PyQt5.QtCore import Qt, QPropertyAnimation, QTimer, QPoint, QEasingCurve
+import os
+import sys
 
 from RoundShadow import RoundShadow
 
@@ -16,7 +18,31 @@ class MessageBox(RoundShadow):
         super(MessageBox, self).__init__(parent)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window | Qt.Tool | Qt.WindowStaysOnTopHint)
-        _global_font = QFontDatabase.applicationFontFamilies(QFontDatabase.addApplicationFont(r'.wish\fonts\HYWH-85w Heavy.ttf'))[0]
+        def get_resource_path(relative_path):
+            """获取资源文件的绝对路径（兼容 PyInstaller 单文件打包环境）"""
+            if hasattr(sys, '_MEIPASS'):
+                # 打包后临时解压目录
+                base_path = sys._MEIPASS
+            else:
+                # 本地开发时的根目录
+                base_path = os.path.abspath('.')
+            return os.path.join(base_path, relative_path)
+
+
+        # 1. 获取字体的真实路径
+        font_path = get_resource_path(
+            os.path.join('.wish', 'fonts', 'HYWH-85w Heavy.ttf')
+        ) 
+        font_id = QFontDatabase.addApplicationFont(font_path)
+        if font_id != -1:
+            families = QFontDatabase.applicationFontFamilies(font_id)
+            if families:
+                _global_font = families[0]
+            else:
+                _global_font = 'Microsoft YaHei'  # 备用默认字体
+        else:
+            print(f'警告: 字体加载失败，路径: {font_path}')
+            _global_font = 'Microsoft YaHei'  # 加载失败时降级使用系统字体，避免程序直接崩溃
         
         self.message_label = QLabel(self)
         self.message_label.setAlignment(Qt.AlignCenter)

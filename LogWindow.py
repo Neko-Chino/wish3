@@ -1,13 +1,15 @@
 """
 祈愿 · 幸运观众：更新说明窗口
 
-Copyright © 2024 XuangeAha(轩哥啊哈OvO/卡猫kat)
+Copyright © 2024-2026 卡猫kat
 
 """
 
 from PyQt5.QtWidgets import QLabel, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout
 from PyQt5.QtGui import QFont, QFontDatabase, QIcon
 from PyQt5.QtCore import Qt
+import os
+import sys
 
 from RoundShadow import RoundShadow
 from MovableWindow import MovableWindow
@@ -20,7 +22,32 @@ class LogWindow(MovableWindow):
         self.round_shadow = RoundShadow(self)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
-        _global_font = QFontDatabase.applicationFontFamilies(QFontDatabase.addApplicationFont(r'.wish\fonts\HYWH-85w Heavy.ttf'))[0]  
+        
+        def get_resource_path(relative_path):
+            """获取资源文件的绝对路径（兼容 PyInstaller 单文件打包环境）"""
+            if hasattr(sys, '_MEIPASS'):
+                # 打包后临时解压目录
+                base_path = sys._MEIPASS
+            else:
+                # 本地开发时的根目录
+                base_path = os.path.abspath('.')
+            return os.path.join(base_path, relative_path)
+
+
+        # 1. 获取字体的真实路径
+        font_path = get_resource_path(
+            os.path.join('.wish', 'fonts', 'HYWH-85w Heavy.ttf')
+        ) 
+        font_id = QFontDatabase.addApplicationFont(font_path)
+        if font_id != -1:
+            families = QFontDatabase.applicationFontFamilies(font_id)
+            if families:
+                _global_font = families[0]
+            else:
+                _global_font = 'Microsoft YaHei'  # 备用默认字体
+        else:
+            print(f'警告: 字体加载失败，路径: {font_path}')
+            _global_font = 'Microsoft YaHei'  # 加载失败时降级使用系统字体，避免程序直接崩溃
 
         self.log_layout = QVBoxLayout(self)
 
@@ -29,7 +56,7 @@ class LogWindow(MovableWindow):
         self.log_title_label = QLabel(title_label, self)
         self.log_title_label.setFont(QFont(_global_font, 11))
         self.log_close_button = QPushButton('', self)
-        self.log_close_button.setIcon(QIcon(r'.wish\assets\icon\close.png'))
+        self.log_close_button.setIcon(QIcon(get_resource_path(os.path.join('.wish', 'assets', 'icon', 'close.png'))))
         self.log_close_button.setFont(QFont(_global_font, 12))
         self.log_close_button.clicked.connect(self.close)
         self.log_close_button.setFixedSize(30, 30)
@@ -44,7 +71,9 @@ class LogWindow(MovableWindow):
 
         self.log_table = QGridLayout()  # 更新说明表格
 
-        with open('CHANGELOG.txt', 'r', encoding='utf-8') as file:  # 更新说明文档读取
+        changelog_path = get_resource_path('CHANGELOG.txt')
+
+        with open(changelog_path, 'r', encoding='utf-8') as file:
             content_list = [line.strip() for line in file]
 
         for x in range(1, int(len(content_list)/3+1)):

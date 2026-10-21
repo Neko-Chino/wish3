@@ -1,7 +1,7 @@
 """
 可拖动重构窗口框架
 
-Copyright © 2023-2025 XuangeAha(轩哥啊哈OvO/卡猫kat)
+Copyright © 2023-2026 卡猫kat
 
 """
 

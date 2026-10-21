@@ -1,13 +1,15 @@
 """
 祈愿 · 幸运观众：主窗口
 
-Copyright © 2023-2025 XuangeAha(轩哥啊哈OvO)
+Copyright © 2023-2026 卡猫kat
 
 """
 
 from PyQt5.QtWidgets import QLabel, QPushButton, QHBoxLayout, QVBoxLayout, QMessageBox, QGraphicsOpacityEffect, QMenu, QGraphicsDropShadowEffect
 from PyQt5.QtGui import QFont, QFontDatabase, QIcon, QPixmap, QColor
 from PyQt5.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve
+import os
+import sys
 import time
 import random
 import pyperclip
@@ -18,6 +20,7 @@ from SettingsWindow import SettingsWindow
 import MessageBox
 
 from config import _ver_short, _ver, _ver_type, _iconpath, _base_numbers, _default_lang , _EVER_excluded_numbers, _morning_newspaper, _is_special_wish_on, _is_debug_on, _is_zlb_on
+
 class WishWindow(MovableWindow):
     def __init__(self, parent=None):
         super(WishWindow, self).__init__(parent)
@@ -29,29 +32,29 @@ class WishWindow(MovableWindow):
         self.history_all, self.history_last = [], []
         self.tie_list, self.separate_list, self.last_pick_tied = [], [], False
 
-        try:  # 「自定义祈愿学号池」自定义祈愿学号解析加载
-            with open('lucky.txt', 'r', encoding='utf-8') as file:
-                get_content = [line.strip() for line in file][1]
-                resolved_list = self.Resolver.resolve(get_content)
-                if resolved_list in [[-1],[]]:
-                    self.supportable_numbers = [_i for _i in _base_numbers if _i not in _EVER_excluded_numbers]
-                    self.GUARANTEE = [8, 60]
-                    if _default_lang == 0:
-                        SettingsWindow.show_dialoguebox(self, f"「自定义祈愿学号池」中存在输入错误，请检查：\n\n        {get_content}\n\n  当前学号池及保底机制已重置为默认（学号1-41，8-60保底）。", lang=0, type=QMessageBox.Critical)
-                    else:
-                        SettingsWindow.show_dialoguebox(self, f"There are errors in the「Customed Lucky Number Pool」input, please check.\n\n        {get_content}\n\nThe current student number pool and guarantee mode have been reset to default (numbers 1-41, with 8-60 guarantee).", lang=1, type=QMessageBox.Critical)
-                else:
-                    if len(resolved_list) == 1:
-                        if _default_lang == 0:
-                            SettingsWindow.show_dialoguebox(self, f"「自定义祈愿学号池」中仅有一个学号： {resolved_list[0]}\n\n  这将导致祈愿的结果都为该学号。", lang=0)
-                        else:
-                            SettingsWindow.show_dialoguebox(self, f"There is only one student number in「Customed Lucky Number Pool」:  {resolved_list[0]}\n\n  This will result in all wishes being the same student number.", lang=1)
-                    self.supportable_numbers = resolved_list
-                    length = len(self.supportable_numbers)
-                    self.GUARANTEE = [int(length/5 + 1) if length < 20 else 8, (int(length*1.5) // 10 + 1) * 10]
-        except (FileNotFoundError, IndexError):
-            self.supportable_numbers = [_i for _i in _base_numbers if _i not in _EVER_excluded_numbers]
-            self.GUARANTEE = [8, 60]
+        # try:  # 「自定义祈愿学号池」自定义祈愿学号解析加载
+        #     with open('lucky.txt', 'r', encoding='utf-8') as file:
+        #         get_content = [line.strip() for line in file][1]
+        #         resolved_list = self.Resolver.resolve(get_content)
+        #         if resolved_list in [[-1],[]]:
+        #             self.supportable_numbers = [_i for _i in _base_numbers if _i not in _EVER_excluded_numbers]
+        #             self.GUARANTEE = [8, 60]
+        #             if _default_lang == 0:
+        #                 SettingsWindow.show_dialoguebox(self, f"「自定义祈愿学号池」中存在输入错误，请检查：\n\n        {get_content}\n\n  当前学号池及保底机制已重置为默认（学号1-41，8-60保底）。", lang=0, type=QMessageBox.Critical)
+        #             else:
+        #                 SettingsWindow.show_dialoguebox(self, f"There are errors in the「Customed Lucky Number Pool」input, please check.\n\n        {get_content}\n\nThe current student number pool and guarantee mode have been reset to default (numbers 1-41, with 8-60 guarantee).", lang=1, type=QMessageBox.Critical)
+        #         else:
+        #             if len(resolved_list) == 1:
+        #                 if _default_lang == 0:
+        #                     SettingsWindow.show_dialoguebox(self, f"「自定义祈愿学号池」中仅有一个学号： {resolved_list[0]}\n\n  这将导致祈愿的结果都为该学号。", lang=0)
+        #                 else:
+        #                     SettingsWindow.show_dialoguebox(self, f"There is only one student number in「Customed Lucky Number Pool」:  {resolved_list[0]}\n\n  This will result in all wishes being the same student number.", lang=1)
+        #             self.supportable_numbers = resolved_list
+        #             length = len(self.supportable_numbers)
+        #             self.GUARANTEE = [int(length/5 + 1) if length < 20 else 8, (int(length*1.5) // 10 + 1) * 10]
+        # except (FileNotFoundError, IndexError):
+        self.supportable_numbers = [_i for _i in _base_numbers if _i not in _EVER_excluded_numbers]
+        self.GUARANTEE = [8, 60]
 
         self.pick_num, self.pick_num_rest, self.last_pick, self.last_some_picks, self.lucky_rest = 0, self.GUARANTEE[1], 0, [], self.supportable_numbers.copy()
         self.information_list_zh = [
@@ -63,14 +66,39 @@ class WishWindow(MovableWindow):
         self.round_shadow = RoundShadow(self)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
-        _global_font = QFontDatabase.applicationFontFamilies(QFontDatabase.addApplicationFont(r'.wish\fonts\HYWH-85w Heavy.ttf'))[0]  
+
+        def get_resource_path(relative_path):
+            """获取资源文件的绝对路径（兼容 PyInstaller 单文件打包环境）"""
+            if hasattr(sys, '_MEIPASS'):
+                # 打包后临时解压目录
+                base_path = sys._MEIPASS
+            else:
+                # 本地开发时的根目录
+                base_path = os.path.abspath('.')
+            return os.path.join(base_path, relative_path)
+
+
+        # 1. 获取字体的真实路径
+        font_path = get_resource_path(
+            os.path.join('.wish', 'fonts', 'HYWH-85w Heavy.ttf')
+        ) 
+        font_id = QFontDatabase.addApplicationFont(font_path)
+        if font_id != -1:
+            families = QFontDatabase.applicationFontFamilies(font_id)
+            if families:
+                _global_font = families[0]
+            else:
+                _global_font = 'Microsoft YaHei'  # 备用默认字体
+        else:
+            print(f'警告: 字体加载失败，路径: {font_path}')
+            _global_font = 'Microsoft YaHei'  # 加载失败时降级使用系统字体，避免程序直接崩溃
 
         self.root_settings = SettingsWindow(self)
         self.main_layout = QVBoxLayout(self)
 
         self.header_layout = QHBoxLayout()  # 标题栏
 
-        self.title = f'祈愿·幸运观众 {_ver_short}（{_ver_type}）{_ver}' if _ver_type != '正式版' else f'祈愿·幸运观众 {_ver_short}'  # 标题
+        self.title = f'祈愿 · 幸运观众 {_ver_short}（{_ver_type}）{_ver}' if _ver_type != '正式版' else f'祈愿 · 幸运观众 {_ver_short}'  # 标题
         self.title_label = QLabel(self.title, self)
         self.title_label.setFont(QFont(_global_font, 11))
 
@@ -82,24 +110,29 @@ class WishWindow(MovableWindow):
         self.newspaper = QLabel('', self)  # 动态信息报纸
         self.newspaper.setFont(QFont(_global_font, 11))
 
+        def get_resource_path(relative_path):
+            """获取资源文件的绝对路径（兼容 PyInstaller 单文件打包环境）"""
+            base_path = getattr(sys, '_MEIPASS', os.path.abspath('.'))
+            return os.path.join(base_path, relative_path)
+        
         self.history_button = QPushButton('', self)  # 历史记录按钮
-        self.history_button.setIcon(QIcon(r'.wish\assets\icon\history.png'))
+        self.history_button.setIcon(QIcon(get_resource_path(os.path.join('.wish', 'assets', 'icon', 'history.png'))))
         self.history_button.clicked.connect(self.show_history)
         self.set_widget_style(self.history_button, 'gray', 'white', 30, 30)
 
         self.minimize_button = QPushButton('', self)  # 最小化按钮
-        self.minimize_button.setIcon(QIcon(r'.wish\assets\icon\minimize.png'))
+        self.minimize_button.setIcon(QIcon(get_resource_path(os.path.join('.wish', 'assets', 'icon', 'minimize.png'))))
         self.minimize_button.clicked.connect(self.showMinimized)
         self.set_widget_style(self.minimize_button, 'gray', 'white', 30, 30)
 
         self.settings_button = QPushButton('', self)  # 设置按钮
-        self.settings_button.setIcon(QIcon(r'.wish\assets\icon\settings.png'))
+        self.settings_button.setIcon(QIcon(get_resource_path(os.path.join('.wish', 'assets', 'icon', 'settings.png'))))
         self.settings_button.clicked.connect(self.root_settings.show)
         self.set_widget_style(self.settings_button, 'gray', 'white', 30, 30)
 
         self.close_button = QPushButton('', self)  # 关闭按钮
-        self.close_button.setIcon(QIcon(r'.wish\assets\icon\close.png'))
-        self.close_button.clicked.connect(self.close) 
+        self.close_button.setIcon(QIcon(get_resource_path(os.path.join('.wish', 'assets', 'icon', 'close.png'))))
+        self.close_button.clicked.connect(self.close)
         self.set_widget_style(self.close_button, 'red', 'white', 30, 30)
         
         for _widget in [self.title_label, self.information_toggle_button, 1, self.newspaper, 1, self.history_button, self.minimize_button, self.settings_button, self.close_button]:  # 标题栏布局
@@ -244,16 +277,14 @@ class WishWindow(MovableWindow):
         
         self._is_zlb = random.randint(1, 50) == 1  # 教师
         if _is_zlb_on and self._is_zlb:
-            teachers = ['@teacher.zlb', '@teacher.cb', '@teacher.zsq']
+            teachers = ['@teacher.cb']
             lucky_one = random.choice(teachers)
         else:
             lucky_one = self.get_lucky()
                     
         profile_photo_path = f'.wish/profilephoto/{lucky_one}.jpg'
         teacher_mapping = {  # 教师头像
-            '@teacher.zlb': '张立波',
             '@teacher.cb': '程斌',
-            '@teacher.zsq': '张双桥'
         }
         lucky_one = teacher_mapping.get(lucky_one, lucky_one)
         

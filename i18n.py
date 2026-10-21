@@ -1,13 +1,13 @@
 """
 祈愿 · 幸运观众：本地化静态字符串
 
-Copyright © 2025 XuangeAha(轩哥啊哈OvO/卡猫kat)
+Copyright © 2025-2026 卡猫kat
 
 """
 
 STATIC_STRINGS = {
     '0': {
-        'title': '祈愿·幸运观众',
+        'title': '祈愿 · 幸运观众',
         'information_button': '∨祈愿详情∨',
         'button_once': '抽 1 次',
         'button_ten': '抽 10 次',
