@@ -5,8 +5,8 @@ Copyright © 2024-2026 卡猫kat
 
 """
 
-_ver_short: str = '3.6.0 (6班)'  # 短版本号
-_ver: str = '3.6.0-Release-Class6'  # 版本号
+_ver_short: str = '3.6.0 (5班)'  # 短版本号
+_ver: str = '3.6.0-Release-Class5'  # 版本号
 _ver_type: str = '正式版'  # 版本类型
 
 # 如果是12月，则只有“春考加油！！”
@@ -23,10 +23,10 @@ _is_debug_on: bool = False  # 是否启用调试模式
 _is_profilephotoupdatewindow_shown: bool = False  # 是否显示头像更新窗口
 _is_zlb_on: bool = True  # 是否开启ZLB模式
 
-_base_numbers: list = list(range(1, 36))  # 默认基础学号
+_base_numbers: list = list(range(1, 35))  # 默认基础学号
 
 # 保留了学号命名空间，但默认无法在祈愿中获得的学号
 # “无论当下的境遇如何，属于幸运观众们的星空中将永远闪耀着你的位置。”
 # "No matter the present, your place will forever shine in the starry sky of the luckiest ones."
-_EVER_excluded_numbers: list = []  
+_EVER_excluded_numbers: list = [24]  
 

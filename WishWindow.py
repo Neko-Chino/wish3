@@ -324,7 +324,18 @@ class WishWindow(MovableWindow):
             self.label_number_avatar.clear()
             self.label_number_text.setFixedWidth(620)
             self.label_number_text.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
-            self.label_number_text.setText(str(lucky_one))
+            student_names = {
+                1: '翁若芯', 2: '陈俊豪', 3: '郭宸', 4: '陈昊鹏', 5: '金晨蕊',
+                6: '周晨希', 7: '夏嘉倪', 8: '浦剑浩', 9: '瞿宸宇', 10: '潘彩夫',
+                11: '吴姝钰', 12: '付博文', 13: '杨屹腾', 14: '王韬涵', 15: '杨奕沁',
+                16: '梁莫非', 17: '刘思喆', 18: '龚云起', 19: '竺源清', 20: '曹紫涵',
+                21: '彭幼怡', 22: '肖婉欣', 23: '林奕辰', 25: '王宸林', 26: '童劲文',
+                27: '王子睿', 28: '王子慕', 29: '陆易恒', 30: '纪舒尹', 31: '李墨白',
+                32: '张李昊', 33: '李思恩', 34: '尹华婷',
+            }
+            student_name = student_names.get(lucky_one)
+            display_text = f'{lucky_one} {student_name}' if student_name else str(lucky_one)
+            self.label_number_text.setText(display_text)
 
         self.adjustSize()
         self.adjustSize()
